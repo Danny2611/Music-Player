@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+        integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w=="
+        crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets//css//style.css">
+</head>
+
+<body>
+    <div class="player ">
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <!-- Header -->
+            <header>
+                <h4>Now playing:</h4>
+                <h2></h2>
+            </header>
+
+            <!-- CD -->
+            <div class="cd">
+                <div class="cd-thumb" style="background-image:url()">
+                </div>
+            </div>
+
+            <!-- Control -->
+            <div class="control">
+                <div class="btn btn-repeat">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <div class="btn btn-prev">
+                    <i class="fas fa-step-backward"></i>
+                </div>
+                <div class="btn btn-toggle-play">
+                    <i class="fas fa-pause icon-pause"></i>
+                    <i class="fas fa-play icon-play"></i>
+                </div>
+                <div class="btn btn-next">
+                    <i class="fas fa-step-forward"></i>
+                </div>
+                <div class="btn btn-random">
+                    <i class="fas fa-random"></i>
+                </div>
+            </div>
+            <div class="infor-time">
+                <div class="seconds-current">00:00</div>
+                <input id="progress" class="progress" type="range" value="0" step="1" min="0" max="100">
+                <div class="total-time">00:00</div>
+            </div>
+
+
+            <audio id="audio" src=""></audio>
+        </div>
+
+        <!-- Playlist -->
+        <div class="playlist">
+
+        </div>
+
+
+    </div>
+    <button id="dark-mode-toggle">
+        <i class=" fas fa-regular fa-moon darking " style="display: none;">Dark Mode</i>
+        <i class=" fas fa-regular fa-sun  lighting"> Light Mode</i>
+    </button>
+    <script>
+        // Render song
+        // Scroll top
+        // Play / Pause / Seek
+        // Cd  rotate
+        // Next / prev
+        // Random
+        // Next / Repeat while  ended
+        // Active song
+        // Scroll active  song into view
+        // Play song while click
+
+
+        const $ = document.querySelector.bind(document);
+        const $$ = document.querySelectorAll.bind(document);
+
+        const PLAYER_STORAGE_KEY = 'F8_PLAYER'
+
+
+        const playlist = $('.playlist')
+        const cd = $('.cd')
+        const heading = $('header h2')
+        const cdThumb = $('.cd-thumb')
+        const audio = $('#audio')
+        const playBtn = $('.btn-toggle-play')
+        const player = $('.player')
+        const progress = $('#progress')
+        const secondsCurrent = $('.seconds-current')
+        const totalDuration = $('.total-time')
+        const preBtn = $('.btn-prev')
+        const nextBtn = $('.btn-next')
+        const randomBtn = $('.btn-random')
+        const repeatBtn = $('.btn-repeat')
+
+
+
+
+
+
+
+        const app = {
+            currentIndex: 0,
+            isPlaying: false,
+            isRandom: false,
+            isRepeat: false,
+            config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
+            songIndexes: [], // list song indexes played
+            songQueue: [], // map song queue
+
+
+
+            songs: [
+                {
+                    name: "FELL SO COLD",
+                    singer: "CarpetMan",
+                    path: "./assets/audio/FEll SO COLD.MP3",
+                    image: "./assets/img/luffy.jpg"
+                },
+                {
+                    name: "Over Drive",
+                    singer: "Conan Grey",
+                    path: "./assets/audio/Over Drive.mp3",
+                    image:
+                        "https://th.bing.com/th/id/OIP.--qXMCOgEGfxArjfBrSkvQHaMe?w=115&h=182&c=7&r=0&o=5&dpr=1.6&pid=1.7"
+                },
+                {
+                    name: "Die With Smile",
+                    singer: "Lady Gaga - Bruno Mars",
+                    path:
+                        "./assets/audio/Die With Smile.mp3",
+                    image: "https://th.bing.com/th/id/OIP.baCAs4Q4qzgYUcl8An6YqwHaE8?w=265&h=180&c=7&r=0&o=5&dpr=1.6&pid=1.7"
+                },
+                {
+                    name: "Same Old Love",
+                    singer: "Selena Gomes",
+                    path: "./assets/audio/Same Old Love.mp3",
+                    image:
+                        "https://th.bing.com/th?q=Same+Old+Love+Selena+Gomez+Images&w=120&h=120&c=1&rs=1&qlt=90&cb=1&dpr=1.6&pid=InlineBlock&mkt=en-WW&cc=VN&setlang=en&adlt=strict&t=1&mw=247"
+                },
+                {
+                    name: "Stay",
+                    singer: "Justin Bieber - The Kid Laroi ",
+                    path: "./assets/audio/Stay.mp3",
+                    image:
+                        "http://ts4.mm.bing.net/th?id=OIP.odIoeYanYTb5pL5TNrGTxwHaEK&pid=15.1"
+                },
+                {
+                    name: "Quay đi quay lại",
+                    singer: "HIEUTHUHAI",
+                    path:
+                        "./assets/audio/Quay Di Quay Lai.mp3",
+                    image:
+                        "https://kenh14cdn.com/203336854389633024/2024/4/27/img8009-17141866510131676631588-17142252857661477563757.jpg"
+                }, {
+                    name: "Tràn Ngập Bộ Nhớ",
+                    singer: "Dương Domic",
+                    path:
+                        "./assets/audio/Tran Ngap Bo Nho.mp3",
+                    image:
+                        "https://media.viez.vn/prod/2024/4/29/large_image_1ecd312832.png"
+                },
+
+
+
+            ],
+            setConfig: function (key, value) {
+                this.config[key] = value;
+                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config));
+            },
+            render: function () {
+                const htmls = this.songs.map((song, index) => {
+                    return `
+                      <div class="song ${index === this.currentIndex ? 'active' : ''}">
+                          <div class="thumb" style="background-image: url('${song.image}')"></div>
+                          <div class="body">
+                              <h3 class="title">${song.name}</h3>
+                              <p class="author">${song.singer}</p>
+                          </div>
+                          <div class="option">
+                            <i class="fas fa-ellipsis-h"></i>
+                                <div class="option-menu" style="display: none;">
+                                    <div class="add-to-queue">Thêm vào danh sách chờ</div>
+                                    <div class="remove-song">Xóa bài hát</div>
+                                </div>
+                            
+                            
+                          </div>
+                      </div>
+                      `;
+                })
+                playlist.innerHTML = htmls.join('');
+            },
+
+            defineProperties: function () {
+                Object.defineProperty(this, 'currentSong', {
+                    get: function () {
+                        return this.songs[this.currentIndex];
+                    }
+                });
+            },
+            handleEvents: function () {
+                const _this = this;
+                const cdWidth = cd.offsetWidth
+
+                // handle cd spinning events image song
+                const cdThumAnimate = cdThumb.animate([
+                    { transform: 'rotate(360deg)' }
+
+                ], {
+                    duration: 10000, // 10s
+                    iterations: Infinity,
+                    // easing: 'linear'
+                })
+
+                cdThumAnimate.pause()
+
+                // handle zooming out image  when srcoll
+                document.onscroll = function () {
+                    const srcollTop = window.srcollY || document.documentElement.scrollTop
+                    const newCdWidth = cdWidth - srcollTop
+                    cd.style.width = newCdWidth > 0 ? newCdWidth + 'px' : 0;
+                    cd.style.opacity = newCdWidth / cdWidth
+                }
+
+                // handle when click play 
+                playBtn.onclick = function () {
+                    if (_this.isPlaying) {
+                        audio.pause()
+
+                    } else {
+                        audio.play()
+
+                    }
+                }
+
+                // when song playing 
+                audio.onplay = function () {
+                    _this.isPlaying = true;
+                    player.classList.add('playing')
+                    cdThumAnimate.play()
+
+                    // _this.loadTimeCurrentSong()
+                }
+
+                // when song pausing
+                audio.onpause = function () {
+                    _this.isPlaying = false;
+
+                    player.classList.remove('playing')
+                    cdThumAnimate.pause()
+
+                }
+
+                // time change when song playing
+                audio.ontimeupdate = function () {
+                    const progressPercent = (audio.currentTime / audio.duration) * 100
+                    progress.value = progressPercent
+
+                    // set total time of song playing
+                    var duration = audio.duration;
+                    var minutes = Math.floor(duration / 60);
+                    var seconds = Math.floor(duration % 60);
+                    
+                    // Đảm bảo giây luôn hiển thị 2 chữ số
+                    if (seconds < 10) {
+                        seconds = '0' + seconds;
+                    }
+                    if (isNaN(minutes) || isNaN(seconds) ){
+                        totalDuration.textContent = "0:00";
+                    }else{
+                        totalDuration.textContent = minutes + ":" + seconds;
+                    }
+                   
+
+                    // set  current time
+                    var currentTime = audio.currentTime;
+                    var currentMinutes = Math.floor(currentTime / 60);
+                    var currentSeconds = Math.floor(currentTime % 60);
+                    if (currentSeconds < 10) {
+                        currentSeconds = '0' + currentSeconds;
+                    }
+                    secondsCurrent.textContent = currentMinutes +":" + currentSeconds
+                }
+
+
+
+
+
+                // handle when seek change 
+                progress.onchange = function (e) {
+                    const seekTime = (e.target.value / 100) * audio.duration
+                    audio.currentTime = seekTime
+                }
+
+                // handle when click next song
+                nextBtn.onclick = function () {
+                    if (_this.isRepeat) {
+                        return;
+                    }
+                    if (_this.isRandom) {
+                        _this.playRandomSong()
+                    } else {
+                        _this.playNextInQueue();
+                    }
+                    audio.play()
+                    _this.render()
+                    _this.srcollToActiveSong()
+                }
+
+                // handle when click prev song
+                preBtn.onclick = function () {
+                    if (_this.isRepeat) {
+                        return;
+                    }
+                    if (_this.isRandom) {
+                        _this.playRandomSong()
+                    } else {
+                        app.prevSong()
+                    }
+                    audio.play()
+                    _this.render()
+                    _this.srcollToActiveSong()
+                }
+
+                // handle turn on off song when click random
+                randomBtn.onclick = function () {
+                    _this.isRandom = !_this.isRandom
+                    _this.setConfig('isRandom', _this.isRandom)
+                    randomBtn.classList.toggle('active', _this.isRandom)
+                }
+
+                // handle turn on off song when click repeat
+                repeatBtn.onclick = function () {
+                    _this.isRepeat = !_this.isRepeat
+                    _this.setConfig('isRepeat', _this.isRepeat)
+                    repeatBtn.classList.toggle('active', _this.isRepeat)
+                }
+
+                // next song when audio is ended
+                audio.onended = function () {
+                    // if (_this.isRandom) {
+                    //     _this.playRandomSong()
+                    // } else {
+                    //     _this.nextSong()
+                    // }
+
+
+                    // audio.play()
+                    if (_this.isRepeat) {
+                        audio.play()
+                    } else {
+                        nextBtn.click()
+                    }
+
+                }
+
+
+                // Listen for behavior click events on playlist
+                playlist.onclick = function (e) {
+                    const songElement = e.target.closest('.song:not(.active)');
+                    const optionElement = e.target.closest('.option');
+
+
+                    // Handle click option of song playlist
+                    if (optionElement) {
+                        const optionMenu = optionElement.querySelector('.option-menu');
+
+                        // Toggle hiển thị menu tùy chọn khi click vào option
+                        if (optionMenu) {
+                            optionMenu.style.display = optionMenu.style.display === "none" || optionMenu.style.display === "" ? "block" : "none";
+                            const rect = optionElement.getBoundingClientRect();
+                            optionMenu.style.top = `${rect.bottom - 60}px`;
+                            optionMenu.style.left = `${rect.left + 30}px`;
+
+                            // Xử lý sự kiện click ngoài vùng menu để ẩn
+                            document.addEventListener('click', function handleOutsideClick(event) {
+                                if (!optionMenu.contains(event.target) && !optionElement.contains(event.target)) {
+                                    optionMenu.style.display = "none";
+                                    document.removeEventListener('click', handleOutsideClick); // Loại bỏ sự kiện sau khi ẩn
+                                }
+                            });
+
+                        }
+
+
+
+                        // Handle add to queue
+                        optionMenu.querySelector('.add-to-queue').onclick = function () {
+                            const songElement = e.target.closest('.song');
+                            const songIndex = Array.from(playlist.children).indexOf(songElement);
+                            app.addToQueue(songIndex); // Thêm bài hát vào hàng chờ
+                            return;
+                        };
+
+                        // Handle remove song
+                        optionMenu.querySelector('.remove-song').onclick = function () {
+                            const songElement = e.target.closest('.song');
+                            const songIndex = Array.from(playlist.children).indexOf(songElement);
+                            app.songs.splice(songIndex, 1);
+
+                            app.render(); // Cập nhật danh sách bài hát sau khi xóa
+
+                        };
+
+
+                    }
+
+                    // Handle click song playlist
+                    if (songElement && !optionElement) {
+                        const songIndex = Array.from(playlist.children).indexOf(songElement);
+                        _this.currentIndex = songIndex;
+                        _this.loadCurrentSong();
+                        audio.play();
+                        _this.render();
+                    }
+                };
+
+
+            },
+
+            nextSong: function () {
+                this.currentIndex++;
+                if (this.currentIndex >= this.songs.length) this.currentIndex = 0;
+                this.loadCurrentSong()
+
+            },
+
+            prevSong: function () {
+                this.currentIndex--;
+                if (this.currentIndex <= 0) this.currentIndex = this.songs.length - 1;
+
+                this.loadCurrentSong()
+
+            },
+            // loadTimeCurrentSong: function () {
+
+            //     var duration = _this.audio.duration;
+            //     // Đổi thời gian từ giây sang phút:giây (mm:ss)
+            //     var minutes = Math.floor(duration / 60);
+            //     var seconds = Math.floor(duration % 60);
+
+            //     // Đảm bảo giây luôn hiển thị 2 chữ số
+            //     if (seconds < 10) {
+            //         seconds = '0' + seconds;
+            //     }
+
+            //     // Hiển thị thời gian trong phần tử HTML
+            //     songDuration.textContent = minutes + ":" + seconds;
+            // },
+
+            srcollToActiveSong: function () {
+                setTimeout(() => {
+                    const activeSong = $('.song.active');
+                    if (activeSong) {  // Kiểm tra xem có phần tử active hay không
+                        activeSong.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                    } else {
+                        console.log("Không tìm thấy bài hát đang active.");
+                    }
+                }, 300);
+            },
+
+            loadCurrentSong: function () {
+                if (this.currentSong != null) {
+                    heading.textContent = this.currentSong.name
+                    cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`
+                    audio.src = this.currentSong.path
+                }
+                audio.play();
+
+            },
+
+            loadConfig: function () {
+                this.isRandom = this.config.isRandom
+                this.isRepeat = this.config.isRepeat
+            },
+
+            playRandomSong: function () {
+                // Khởi tạo danh sách chỉ số bài hát nếu chưa có hoặc đã hết bài để phát
+                if (!this.songIndexes || this.songIndexes.length === 0) {
+                    this.songIndexes = [...Array(this.songs.length).keys()]; // Tạo mảng chứa các chỉ số [0, 1, 2, ..., n]
+                }
+
+                // Chọn một chỉ số ngẫu nhiên từ danh sách
+                const randomIndex = Math.floor(Math.random() * this.songIndexes.length);
+
+                // Lấy chỉ số bài hát từ mảng ngẫu nhiên
+                this.currentIndex = this.songIndexes[randomIndex];
+                // Xóa bài hát vừa phát khỏi danh sách chỉ số
+                this.songIndexes.splice(randomIndex, 1);
+
+                // Gọi hàm để load và phát bài hát
+                this.loadCurrentSong();
+            },
+
+            // Hàm thêm bài hát vào hàng chờ
+            addToQueue: function (songIndex) {
+                if (!this.songQueue.includes(songIndex)) { // Chỉ thêm nếu bài chưa có trong hàng chờ
+                    this.songQueue.push(songIndex);
+                    console.log(`Added song index ${songIndex} to queue.`);
+                } else {
+                    console.log(`Song index ${songIndex} is already in the queue.`);
+                }
+            },
+
+            // Khi phát xong bài hiện tại, phát bài từ hàng chờ nếu có
+            playNextInQueue: function () {
+                if (this.songQueue.length > 0) {
+                    this.currentIndex = this.songQueue.shift(); // Lấy bài hát đầu tiên từ hàng chờ
+                    console.log(this.currentIndex)
+                    this.loadCurrentSong();
+                    audio.play();
+                } else {
+                    console.log('No more song in queue.')
+                    this.nextSong(); // Nếu không có bài trong hàng chờ thì phát bài tiếp theo bình thường
+                }
+            },
+
+
+            start: function () {
+
+                // load config
+                this.loadConfig()
+
+                // Định nghĩa các thuộc tính của object
+                this.defineProperties()
+
+                //Lắng nghe / xử lí  các sự kiện  (DOM event )
+                this.handleEvents();
+
+                // Load first song
+                this.loadCurrentSong()
+
+                //Render playlist
+                this.render();
+
+                // load  initial state of buttons random and repeat
+                randomBtn.classList.toggle('active', this.isRandom)
+                repeatBtn.classList.toggle('active', this.isRepeat)
+            },
+
+
+
+        }
+        app.start();
+
+    </script>
+    <script>
+        const darkModeToggle = $('#dark-mode-toggle');
+        const body = document.body;
+
+        // Load dark mode state from localStorage
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            body.classList.add('dark-mode');
+
+        }
+
+        // Toggle dark mode on button click
+        darkModeToggle.onclick = function () {
+
+            var sunIcon = document.querySelector('.lighting');
+            var moonIcon = document.querySelector('.darking');
+
+            body.classList.toggle('dark-mode');
+            const darkModeIsActive = body.classList.contains('dark-mode');
+
+            localStorage.setItem('darkMode', darkModeIsActive); // Save the state in localStorage
+
+            // Toggle visibility of icons
+            if (darkModeIsActive) {
+                moonIcon.style.display = 'inline-block'; // Show Dark Mode icon
+                sunIcon.style.display = 'none';         // Hide Light Mode icon
+            } else {
+                moonIcon.style.display = 'none';        // Hide Dark Mode icon
+                sunIcon.style.display = 'inline-block'; // Show Light Mode icon
+            }
+        };
+    </script>
+
+</body>
+
+</html>
